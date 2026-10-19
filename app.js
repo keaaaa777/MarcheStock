@@ -75,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
     && !state.parts.length && !state.products.length && !state.venues.length && !state.sales.length) {
     window.__seedMakerDemo?.();
   }
+  registerOfflineSupport();
   if (stateLoadError) {
     showToast("保存データを読み込めなかったため、安全のため空の状態で表示しています。バックアップまたはJSONから復元してください。");
   }
@@ -752,6 +753,14 @@ function bindForms() {
     event.preventDefault();
     event.returnValue = "";
   });
+}
+
+// iPad などブラウザで使うときのオフライン対応。Electron（file://）では使わない。
+function registerOfflineSupport() {
+  if (!location.protocol.startsWith("http") || !("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("sw.js").catch((error) => console.warn("Service Worker を登録できませんでした", error));
+  // ブラウザの容量整理で保存データが消されにくくする。
+  navigator.storage?.persist?.().catch(() => {});
 }
 
 function bindIfExists(id, eventName, handler) {

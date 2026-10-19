@@ -20,7 +20,7 @@
       "app.js",
       "main.cjs",
       "package.json",
-      "node_modules/qrcode/**/*"
+      "vendor/**/*"
     ],
     "directories": {
       "output": "dist"
