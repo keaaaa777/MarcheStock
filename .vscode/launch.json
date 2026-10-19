@@ -14,7 +14,10 @@
       "name": "Marche Stock: Electronデバッグ",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/electron/dist/electron.exe",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/electron/dist/electron.exe"
+      },
       "args": ["."],
       "cwd": "${workspaceFolder}",
       "outputCapture": "std",

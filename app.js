@@ -714,8 +714,8 @@ function bindForms() {
     bindIfExists(id, "change", renderSalesAnalysis);
   });
 
-  document.getElementById("partForm").addEventListener("reset", () => setTimeout(clearPartForm));
-  document.getElementById("productForm").addEventListener("reset", () => setTimeout(clearProductForm));
+  document.getElementById("partForm").addEventListener("reset", () => setTimeout(() => clearPartForm(false)));
+  document.getElementById("productForm").addEventListener("reset", () => setTimeout(() => clearProductForm(false)));
   document.getElementById("newPartBtn")?.addEventListener("click", () => { clearPartForm(); openPartEditor(); });
   document.getElementById("newProductBtn")?.addEventListener("click", () => { clearProductForm(); openProductEditor(); });
   document.querySelectorAll(".catalog-form-drawer").forEach((drawer) => {
@@ -732,7 +732,7 @@ function bindForms() {
   document.getElementById("partEditorDrawer")?.addEventListener("click", handleCatalogDrawerClick);
   document.getElementById("productEditorDrawer")?.addEventListener("click", handleCatalogDrawerClick);
   document.getElementById("productionDrawer")?.addEventListener("click", handleCatalogDrawerClick);
-  document.getElementById("venueForm").addEventListener("reset", () => setTimeout(clearVenueForm));
+  document.getElementById("venueForm").addEventListener("reset", () => setTimeout(() => clearVenueForm(false)));
   document.getElementById("newVenueBtn")?.addEventListener("click", () => {
     setVenuePageTab("record");
     clearVenueForm();
@@ -745,8 +745,8 @@ function bindForms() {
   document.getElementById("addVenueCarryRow")?.addEventListener("click", () => addVenueCarryRow());
   document.getElementById("addVenuePlanRow")?.addEventListener("click", () => addVenuePlanRow());
   addVenueDrawerCloseButton();
-  document.getElementById("purchaseForm").addEventListener("reset", () => setTimeout(clearPurchaseForm));
-  document.getElementById("saleForm").addEventListener("reset", () => setTimeout(clearSaleForm));
+  document.getElementById("purchaseForm").addEventListener("reset", () => setTimeout(() => clearPurchaseForm(false)));
+  document.getElementById("saleForm").addEventListener("reset", () => setTimeout(() => clearSaleForm(false)));
   window.addEventListener("beforeunload", (event) => {
     if (!document.querySelector("form[data-dirty=\"1\"]")) return;
     event.preventDefault();
@@ -5102,9 +5102,10 @@ async function cancelSale(id) {
   showToast("売上明細を取消しました。履歴は残っています。");
 }
 
-function clearPartForm() {
+// reset イベントから呼ぶときは resetFields=false にして、reset の再発火による無限ループを防ぐ。
+function clearPartForm(resetFields = true) {
   const form = document.getElementById("partForm");
-  form.reset();
+  if (resetFields) form.reset();
   form.elements.id.value = "";
   form.elements.purchaseQty.value = 0;
   form.elements.purchaseCost.value = 0;
@@ -5115,9 +5116,9 @@ function clearPartForm() {
   setTodayDefaults();
 }
 
-function clearProductForm() {
+function clearProductForm(resetFields = true) {
   const form = document.getElementById("productForm");
-  form.reset();
+  if (resetFields) form.reset();
   form.elements.id.value = "";
   form.elements.removeImage.value = "0";
   document.getElementById("recipeRows").innerHTML = "";
@@ -5125,9 +5126,9 @@ function clearProductForm() {
   renderImagePreview(document.getElementById("productImagePreview"));
 }
 
-function clearVenueForm() {
+function clearVenueForm(resetFields = true) {
   const form = document.getElementById("venueForm");
-  form.reset();
+  if (resetFields) form.reset();
   form.elements.id.value = "";
   form.elements.removeImages.value = "[]";
   form.elements.replaceImages.checked = false;
@@ -5138,10 +5139,10 @@ function clearVenueForm() {
   setTodayDefaults();
 }
 
-function clearPurchaseForm() {
+function clearPurchaseForm(resetFields = true) {
   const form = document.getElementById("purchaseForm");
   if (!form) return;
-  form.reset();
+  if (resetFields) form.reset();
   form.elements.id.value = "";
   form.elements.originalPartId.value = "";
   const lines = document.getElementById("purchaseLines");
@@ -5153,9 +5154,9 @@ function clearPurchaseForm() {
   renderPurchaseOptions();
 }
 
-function clearSaleForm() {
+function clearSaleForm(resetFields = true) {
   const form = document.getElementById("saleForm");
-  form.reset();
+  if (resetFields) form.reset();
   form.elements.id.value = "";
   setTodayDefaults();
   syncCustomerRegionFields(form);
