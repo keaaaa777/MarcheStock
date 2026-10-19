@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Marche Stock: ブラウザで確認",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://localhost:4173/?demo=1",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Marche Stock: ローカルサーバー起動",
+      "sourceMaps": true
+    },
+    {
+      "name": "Marche Stock: Electronデバッグ",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/electron/dist/electron.exe",
+      "args": ["."],
+      "cwd": "${workspaceFolder}",
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Marche Stock: ブラウザ確認＋デバッグ",
+      "configurations": ["Marche Stock: ブラウザで確認"]
+    }
+  ]
+}

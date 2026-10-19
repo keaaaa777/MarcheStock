@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marche Stock</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ocean-decor" aria-hidden="true">
+      <svg class="decor-fish decor-fish-a" viewBox="0 0 120 70" role="img">
+        <path d="M11 34c16-18 44-24 72-8l22-16v48L83 42C55 58 27 52 11 34Z" />
+        <circle cx="75" cy="30" r="4" />
+        <path d="M38 21c5 7 5 18 0 26" />
+      </svg>
+      <svg class="decor-shell" viewBox="0 0 86 78" role="img">
+        <path d="M43 7C22 12 9 30 10 54c0 10 9 17 33 17s33-7 33-17C77 30 64 12 43 7Z" />
+        <path d="M43 11v55M25 20l14 45M61 20 47 65M15 42l24 23M71 42 47 65" />
+      </svg>
+      <svg class="decor-seaweed" viewBox="0 0 92 130" role="img">
+        <path d="M46 124c-6-25 8-37 0-59-7-20-2-36 13-56" />
+        <path d="M44 124c8-29-10-47-6-69 3-17-7-30-24-42" />
+        <path d="M50 124c18-25 18-46 10-62" />
+        <path d="M37 70c-12 2-20 8-25 17M53 54c11-2 20 1 27 10M44 94c-11 0-20 5-27 14" />
+      </svg>
+    </div>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">M</div>
+          <div>
+            <h1>Marche Stock</h1>
+            <p>マルシェ出展者の在庫・販売管理</p>
+          </div>
+        </div>
+        <nav class="nav" aria-label="主要メニュー">
+          <button class="nav-item active" data-view="dashboard">概要</button>
+          <button class="nav-item" data-view="register">レジ</button>
+          <button class="nav-item" data-view="calendar">カレンダー</button>
+          <button class="nav-item" data-view="venues">出展イベント</button>
+          <button class="nav-item" data-view="parts">部品</button>
+          <button class="nav-item" data-view="purchases">仕入・入荷</button>
+          <button class="nav-item" data-view="products">商品</button>
+          <button class="nav-item" data-view="sales">販売履歴</button>
+          <button class="nav-item" data-view="salesAnalysis">販売分析</button>
+          <button class="nav-item" data-view="stockHistory">在庫履歴</button>
+          <button class="nav-item" data-view="expenses">費用一覧</button>
+          <button class="nav-item" data-view="management">管理・集計</button>
+          <button class="nav-item" data-view="dataManagement">データ管理</button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">For Marche Vendors</p>
+            <h2 id="view-title">概要</h2>
+          </div>
+          <div class="topbar-actions">
+            <span id="storageStatus" class="success">保存状態を確認中</span>
+          </div>
+        </header>
+
+        <section class="view active" id="dashboard">
+          <section class="welcome-panel" id="firstRunGuide" aria-labelledby="firstRunGuideTitle">
+            <button class="primary-button welcome-start" id="startTutorialBtn" type="button">操作ガイドを始める</button>
+            <div>
+              <p class="welcome-kicker">はじめての方へ</p>
+              <h3 id="firstRunGuideTitle">まずは3つ登録すると使い始められます</h3>
+              <p>部品や商品、出展イベントを登録すると、在庫と売上を自動で集計できます。</p>
+            </div>
+            <div class="welcome-steps">
+              <button class="welcome-step" type="button" data-jump-view="parts"><strong>1</strong><span>部品を登録</span></button>
+              <button class="welcome-step" type="button" data-jump-view="products"><strong>2</strong><span>商品を登録</span></button>
+              <button class="welcome-step" type="button" data-jump-view="venues"><strong>3</strong><span>イベントを登録</span></button>
+            </div>
+          </section>
+          <div class="metric-grid">
+            <article class="metric">
+              <span>部品在庫評価</span>
+              <strong id="partsValue">0円</strong>
+            </article>
+            <article class="metric">
+              <span>商品在庫評価</span>
+              <strong id="productsValue">0円</strong>
+            </article>
+            <article class="metric">
+              <span>売上累計</span>
+              <strong id="salesTotal">0円</strong>
+            </article>
+            <article class="metric">
+              <span>費用合計</span>
+              <strong id="expenseTotal">0円</strong>
+            </article>
+            <article class="metric profit">
+              <span>概算利益</span>
+              <strong id="roughProfit">0円</strong>
+            </article>
+          </div>
+          <section class="panel dashboard-month-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">THIS MONTH</p>
+                <h3 id="dashboardMonthLabel">今月のカレンダー</h3>
+                <p class="panel-subtitle">今月の申込期限・合否予定日・開催日を確認できます。</p>
+              </div>
+              <button class="ghost-button" type="button" data-jump-view="calendar">カレンダーを開く</button>
+            </div>
+            <div id="dashboardMonthCalendar" class="dashboard-month-calendar" aria-live="polite"></div>
+          </section>
+          <section class="dashboard-visuals" aria-label="売上と在庫のグラフ">
+            <article class="panel chart-panel chart-panel-wide">
+              <div class="panel-header">
+                <div>
+                  <h3>売上の流れ</h3>
+                  <p class="panel-subtitle">月ごとの販売金額を確認</p>
+                </div>
+                <div class="chart-controls">
+                  <select id="dashboardPeriod" aria-label="グラフ期間">
+                    <option value="3months">直近3か月</option>
+                    <option value="1month">1か月</option>
+                    <option value="year">1年間</option>
+                    <option value="all">全期間</option>
+                  </select>
+                  <span class="chart-key"><i></i>売上</span>
+                  <span class="chart-period-summary" id="dashboardPeriodSummary"></span>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <svg id="salesTrendChart" viewBox="0 0 720 250" role="img" aria-label="月別売上グラフ"></svg>
+              </div>
+            </article>
+            <article class="panel chart-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>イベント別売上</h3>
+                  <p class="panel-subtitle">売上の大きい順</p>
+                  <span class="chart-period-summary" id="eventSalesPeriodSummary"></span>
+                </div>
+                <select id="eventSalesPeriod" aria-label="イベント別売上の期間">
+                  <option value="3months">直近3か月</option>
+                  <option value="1month">1か月</option>
+                  <option value="year">1年間</option>
+                  <option value="all">全期間</option>
+                </select>
+              </div>
+              <div id="eventSalesChart" class="bar-chart"></div>
+            </article>
+            <article class="panel chart-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>在庫の状態</h3>
+                  <p class="panel-subtitle">不足しそうなものを先に確認</p>
+                </div>
+              </div>
+              <div id="stockOverviewChart" class="stock-chart"></div>
+            </article>
+          </section>
+          <div class="two-column">
+            <section class="panel">
+              <div class="panel-header">
+                <h3>最近の販売</h3>
+              </div>
+              <div id="recentSales" class="list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h3>在庫メモ</h3>
+              </div>
+              <div id="stockAlerts" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="calendar">
+          <section class="panel calendar-panel">
+            <div class="panel-header calendar-header">
+              <div>
+                <p class="eyebrow">EVENT SCHEDULE</p>
+                <h3>イベントカレンダー</h3>
+                <p class="panel-subtitle">申込期限・合格予定日・開催予定日・実際の稼働日をまとめて確認できます。</p>
+              </div>
+              <div class="calendar-toolbar" aria-label="カレンダーの操作">
+                <button class="ghost-button" id="calendarPrev" type="button">前月</button>
+                <strong id="calendarMonthLabel"></strong>
+                <button class="ghost-button" id="calendarNext" type="button">次月</button>
+                <button class="primary-button" id="calendarToday" type="button">今月</button>
+              </div>
+            </div>
+            <div class="calendar-legend" aria-label="予定の種類">
+              <span class="calendar-legend-item is-application">申込期限</span>
+              <span class="calendar-legend-item is-result">合格予定</span>
+              <span class="calendar-legend-item is-event">開催予定</span>
+              <span class="calendar-legend-item is-actual">実際の稼働日</span>
+            </div>
+            <div id="eventCalendar" class="event-calendar" aria-live="polite"></div>
+            <section class="calendar-upcoming">
+              <div class="panel-header">
+                <h3>直近の予定</h3>
+                <span class="panel-subtitle">予定を選ぶとイベントの記録を編集できます。</span>
+              </div>
+              <div id="calendarUpcoming" class="list"></div>
+            </section>
+          </section>
+        </section>
+
+        <section class="view" id="register">
+          <form class="register-wizard" id="registerSaleForm">
+            <input type="hidden" name="itemType" id="registerItemType" value="product" />
+            <input type="hidden" name="itemId" id="registerItem" />
+            <input type="hidden" name="paymentMethod" id="registerPaymentMethod" value="cash" />
+            <input type="hidden" name="unitPrice" id="registerUnitPrice" value="0" />
+            <input type="hidden" name="quantity" id="registerQuantity" value="1" />
+            <input type="hidden" name="memo" value="" />
+            <input type="hidden" name="soldTime" />
+
+            <header class="register-wizard-header">
+              <div>
+                <p class="eyebrow">CHECKOUT</p>
+                <h3>会計</h3>
+              </div>
+              <label class="register-event-select">対象イベント<select name="venueId" id="registerEvent"></select></label>
+            </header>
+            <nav class="register-wizard-steps" aria-label="会計ステップ">
+              <button type="button" class="active" data-register-screen-target="items"><b>1</b><span>商品選択</span></button>
+              <button type="button" data-register-screen-target="payment"><b>2</b><span>支払い方法</span></button>
+              <button type="button" data-register-screen-target="amount"><b>3</b><span>金額・明細</span></button>
+              <button type="button" data-register-screen-target="complete"><b>4</b><span>決済完了</span></button>
+              <button type="button" data-register-screen-target="attributes"><b>5</b><span>属性</span></button>
+            </nav>
+
+            <section class="register-screen active" data-register-screen="items">
+              <div class="register-screen-heading"><div><p class="eyebrow">1 / 5</p><h4>商品を選ぶ</h4><p>商品をタップすると明細に追加されます。</p></div><button class="danger-button" id="clearRegisterCart" type="button">明細をクリア</button></div>
+              <div class="selected-item-banner" id="registerSelectedItem" hidden>商品を選択してください</div>
+              <div class="register-item-layout">
+                <section class="register-catalog-pane" aria-label="商品カタログ">
+                  <div class="register-catalog-heading">
+                    <h5>商品を選択</h5>
+                    <span>分類から絞り込めます</span>
+                  </div>
+                  <div class="register-tabs">
+                    <button class="register-tab active" type="button" data-register-type="product">商品</button>
+                    <button class="register-tab" type="button" data-register-type="part">部品</button>
+                  </div>
+                  <div class="register-items" id="registerItemButtons"></div>
+                </section>
+                <aside class="register-order-pane" aria-label="現在の明細">
+                  <div class="register-order-heading">
+                    <h5>現在の明細</h5>
+                    <span id="registerItemCount">0点</span>
+                  </div>
+                  <div class="register-cart" id="registerCart"></div>
+                  <div class="register-order-total">
+                    <span>小計</span>
+                    <strong id="registerItemTotal">0円</strong>
+                  </div>
+                  <button class="primary-button" type="button" data-register-next="payment">支払い方法へ進む</button>
+                </aside>
+              </div>
+            </section>
+
+            <section class="register-screen" data-register-screen="payment">
+              <div class="register-screen-heading"><div><p class="eyebrow">2 / 5</p><h4>支払い方法を選ぶ</h4><p>この会計全体に適用されます。</p></div></div>
+              <div class="register-order-preview" id="registerPaymentOrder"></div>
+              <div class="register-payment-buttons register-payment-buttons-large">
+                <button type="button" class="register-payment-button active" data-register-payment="cash" aria-pressed="true">現金</button>
+                <button type="button" class="register-payment-button" data-register-payment="cashless" aria-pressed="false">キャッシュレス</button>
+              </div>
+              <div class="register-screen-actions"><button class="ghost-button" type="button" data-register-back="items">商品選択へ戻る</button><button class="primary-button" type="button" data-register-next="amount">金額入力へ進む</button></div>
+            </section>
+
+            <section class="register-screen" data-register-screen="amount">
+              <div class="register-screen-heading"><div><p class="eyebrow">3 / 5</p><h4>金額入力・明細確認</h4><p>合計、預かり金、おつりを確認して会計します。</p></div></div>
+              <div class="register-amount-layout">
+                <div class="register-amount-main">
+                  <div class="receipt-screen"><span>お会計金額</span><strong id="registerTotal">0円</strong></div>
+                  <div class="amount-summary-row">
+                    <div class="change-amount-card"><span>おつり</span><strong id="registerChange">0円</strong></div>
+                  </div>
+                  <section class="cash-input-panel">
+                    <div class="cash-input-header"><span>預かり金</span><strong>現金会計</strong></div>
+                    <label class="discount-input">割引額（円）<input name="discountAmount" id="registerDiscount" type="number" min="0" step="1" value="0" /></label>
+                    <label class="discount-input">割引理由（任意）<input name="discountReason" id="registerDiscountReason" type="text" maxlength="80" placeholder="セット割、常連割など" /></label>
+                    <div class="discount-quick-buttons" aria-label="割引額を追加">
+                      <button type="button" data-discount-step="100">−100</button>
+                      <button type="button" data-discount-step="500">−500</button>
+                      <button type="button" data-discount-step="1000">−1000</button>
+                    </div>
+                    <label>預かり金<input name="receivedAmount" id="registerReceived" type="number" min="0" step="1" value="0" /></label>
+                    <div class="keypad" id="registerKeypad">
+                      <button type="button" class="keypad-exact" data-key="exact">ちょうど</button>
+                      <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button><button type="button" data-key="1000">+1000</button>
+                      <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="500">+500</button>
+                      <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="100">+100</button>
+                      <button type="button" data-key="0">0</button><button type="button" data-key="00">00</button><button type="button" data-key="back">⌫</button><button type="button" data-key="clear">C</button>
+                    </div>
+                  </section>
+                  <span id="registerReceivedDisplay" hidden>0円</span><span id="registerEventLabel" hidden>未設定</span>
+                </div>
+                <div class="register-amount-detail"><h5>明細</h5><div class="receipt-detail" id="registerReceiptLines"></div><div class="receipt-summary" id="registerSummaryNearTotal"></div></div>
+              </div>
+              <div class="register-screen-actions"><button class="ghost-button" type="button" data-register-back="payment">支払い方法へ戻る</button><button class="primary-button register-submit" type="submit">決済を完了する</button></div>
+            </section>
+
+            <section class="register-screen register-complete-screen" data-register-screen="complete">
+              <div class="register-complete-mark">✓</div><p class="eyebrow">4 / 5</p><h4>決済が完了しました</h4><p>販売記録と在庫を保存しました。</p><div id="registerCompleteSummary" class="register-complete-summary"></div><div class="register-screen-actions"><button class="primary-button" type="button" data-register-next="attributes">購入者属性を入力</button><button class="ghost-button" type="button" data-register-finish>入力せず新しい会計へ</button></div>
+            </section>
+
+            <section class="register-screen" data-register-screen="attributes">
+              <div class="register-screen-heading"><div><p class="eyebrow">5 / 5</p><h4>購入者属性（任意）</h4><p>未選択のまま保存しても問題ありません。</p></div></div>
+              <div class="sale-attributes register-attributes">
+                <div class="form-row"><label>性別<select name="customerGender"><option value="unknown">未回答</option><option value="female">女性</option><option value="male">男性</option><option value="other">その他</option></select></label><label>年齢層<select name="customerAgeGroup"><option value="unknown">未回答</option><option value="under20">20歳未満</option><option value="20s">20代</option><option value="30s">30代</option><option value="40s">40代</option><option value="50s">50代</option><option value="60plus">60代以上</option></select></label></div>
+                <label>購入者区分<select name="customerOrigin"><option value="unknown">未回答</option><option value="domestic">日本人</option><option value="inbound">海外</option></select></label>
+                <label data-customer-region-field>海外の地域傾向<select name="customerRegion"><option value="unknown">未回答</option><option value="western">欧米系</option><option value="asian">アジア系</option><option value="other">その他</option></select></label>
+              </div>
+              <div class="register-screen-actions"><button class="primary-button" type="button" data-save-register-attributes>属性を保存して新しい会計へ</button><button class="ghost-button" type="button" data-register-finish>未選択のまま新しい会計へ</button></div>
+            </section>
+          </form>
+        </section>
+
+        <section class="view" id="parts">
+          <div class="catalog-view">
+            <div class="catalog-toolbar">
+              <div>
+                <p class="eyebrow">PARTS CATALOG</p>
+                <h3>部品を一覧から管理</h3>
+                <p class="panel-subtitle">在庫状況を確認し、必要な操作だけを開きます。</p>
+              </div>
+              <button class="primary-button" id="newPartBtn" type="button">＋ 新しい部品</button>
+            </div>
+            <nav class="catalog-tabs" data-section-tabs="parts" role="tablist" aria-label="部品の操作">
+              <button class="catalog-tab active" type="button" data-section-tab="list" aria-selected="true">一覧</button>
+              <button class="catalog-tab" type="button" data-section-tab="edit" aria-selected="false">編集・登録</button>
+            </nav>
+            <div class="catalog-form-drawer" id="partEditorDrawer" data-section-panel-group="parts" data-section-panel="edit" aria-hidden="true" hidden>
+            <form class="panel form-panel part-form" id="partForm">
+              <div class="panel-header">
+                <h3>部品登録</h3>
+              </div>
+              <input type="hidden" name="id" />
+              <p class="form-section-caption">基本情報・マスタ</p>
+              <div class="part-master-controls">
+                <div class="master-picker-row">
+                  <label>部品カテゴリ<select name="category" id="partCategory"></select></label>
+                  <button class="ghost-button master-add-button" type="button" data-master-toggle="partCategories">＋新規登録</button>
+                </div>
+                <div class="master-inline-editor" data-master-inline="partCategories" hidden>
+                  <input type="text" data-master-input="partCategories" placeholder="例：レジン素材、ビーズ、金具" maxlength="40" />
+                  <button class="ghost-button" type="button" data-master-save="partCategories">カテゴリを追加</button>
+                </div>
+              </div>
+              <label>部品名<input name="name" required placeholder="例: ネジ M3、樹脂液 A" /></label>
+              <label>種類
+                <select name="kind">
+                  <option value="solid">固体</option>
+                  <option value="liquid">液状</option>
+                  <option value="other">その他</option>
+                </select>
+              </label>
+              <div class="form-row">
+                <label>在庫量<input name="stock" type="number" min="0" step="0.01" value="0" /></label>
+                <label>単位<input name="unit" placeholder="個 / ml / g" /></label>
+              </div>
+              <label>最低在庫量<input name="minStock" type="number" min="0" step="0.01" value="0" /></label>
+              <div class="form-row">
+                <label><span class="field-label">初回購入価格</span><input name="initialCost" type="number" min="0" step="1" value="0" /><span class="field-help part-field-help">最初に購入したときの1単位あたりの価格です。</span></label>
+                <label>保管場所<input name="location" placeholder="棚 A-1" /></label>
+              </div>
+              <div class="form-row">
+                <div class="master-picker-row">
+                  <label>マスタ仕入先<select name="supplier" id="partSupplier"></select></label>
+                  <button class="ghost-button master-add-button" type="button" data-master-toggle="suppliers">＋新規登録</button>
+                </div>
+                <div class="master-inline-editor" data-master-inline="suppliers" hidden>
+                  <input type="text" data-master-input="suppliers" placeholder="例：○○商店、手芸材料店" maxlength="60" />
+                  <button class="ghost-button" type="button" data-master-save="suppliers">仕入先を追加</button>
+                </div>
+                <label>初回購入日<input name="purchaseDate" type="date" /></label>
+                <label class="part-average-cost"><span class="field-label">平均仕入単価</span><input id="partAverageCost" type="text" value="未計算" readonly aria-readonly="true" /><span class="field-help part-field-help">初回購入価格と追加仕入から自動計算されます。直接編集はできません。</span></label>
+              </div>
+              <p class="form-section-caption additional-stock-caption">在庫を増やす追加仕入</p>
+              <fieldset class="purchase-box additional-purchase-box">
+                <legend>今回の入荷内容（任意）</legend>
+                <div class="form-row">
+                  <label>追加数量<input name="purchaseQty" type="number" min="0" step="0.01" value="0" /></label>
+                  <label>追加仕入単価<input name="purchaseCost" type="number" min="0" step="1" value="0" /></label>
+                </div>
+                <div class="form-row purchase-meta-row">
+                  <label>今回の仕入先<select name="purchaseSupplier" id="partPurchaseSupplier"></select></label>
+                  <label>追加購入日<input name="purchaseDateNew" type="date" /></label>
+                </div>
+                <p class="field-help">同じ部品を別の価格や購入場所で買った時はここに入力すると、在庫と平均単価を自動更新します。</p>
+              </fieldset>
+              <label>画像（選択すると差し替え）<input name="image" type="file" accept="image/*" /></label>
+              <input type="hidden" name="removeImage" value="0" />
+              <div class="image-preview" id="partImagePreview" aria-live="polite"></div>
+              <label>商品コード／バーコード<input name="barcode" placeholder="JAN・QR・任意コード" /></label>
+              <label>メモ<textarea name="memo" rows="3" placeholder="購入先、注意点など"></textarea></label>
+              <div class="form-actions">
+                <button class="primary-button" type="submit">保存</button>
+                <button class="ghost-button" type="reset">クリア</button>
+              </div>
+            </form>
+            </div>
+            <section class="panel" data-section-panel-group="parts" data-section-panel="list">
+              <div class="panel-header">
+                <h3>部品一覧</h3>
+                <input class="search" id="partSearch" placeholder="検索" />
+              </div>
+              <select id="partSort" aria-label="部品の並び順"><option value="name">名前順</option><option value="stock">在庫が少ない順</option><option value="updated">更新順</option></select>
+              <div id="partList" class="tile-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="products">
+          <div class="catalog-view">
+            <div class="catalog-toolbar">
+              <div>
+                <p class="eyebrow">PRODUCT CATALOG</p>
+                <h3>商品を一覧から管理</h3>
+                <p class="panel-subtitle">在庫数と製作可能数を確認し、カードからすぐに製作できます。</p>
+              </div>
+              <button class="primary-button" id="newProductBtn" type="button">＋ 新しい商品</button>
+            </div>
+            <nav class="catalog-tabs" data-section-tabs="products" role="tablist" aria-label="商品の操作">
+              <button class="catalog-tab active" type="button" data-section-tab="list" aria-selected="true">一覧</button>
+              <button class="catalog-tab" type="button" data-section-tab="edit" aria-selected="false">編集・登録</button>
+            </nav>
+            <div class="catalog-form-drawer" id="productEditorDrawer" data-section-panel-group="products" data-section-panel="edit" aria-hidden="true" hidden>
+            <div class="stack">
+              <form class="panel form-panel" id="productForm">
+                <div class="panel-header">
+                  <h3>商品登録</h3>
+                </div>
+                <input type="hidden" name="id" />
+                <label>商品名<input name="name" required placeholder="例: 完成キット A" /></label>
+                <label>品目<input name="category" list="productCategoryOptions" placeholder="例: アクセサリー、キット、雑貨" /></label>
+                <datalist id="productCategoryOptions">
+                  <option value="アクセサリー"></option>
+                  <option value="キット"></option>
+                  <option value="雑貨"></option>
+                  <option value="消耗品"></option>
+                </datalist>
+                <div class="form-row">
+                  <label>現在在庫<input name="stock" type="number" min="0" step="1" value="0" /></label>
+                  <label>標準販売価格<input name="price" type="number" min="0" step="1" value="0" /></label>
+                </div>
+                <label>最低在庫数<input name="minStock" type="number" min="0" step="1" value="0" /></label>
+                <label>画像（選択すると差し替え）<input name="image" type="file" accept="image/*" /></label>
+                <input type="hidden" name="removeImage" value="0" />
+                <div class="image-preview" id="productImagePreview" aria-live="polite"></div>
+                <label>商品コード／バーコード<input name="barcode" placeholder="JAN・QR・任意コード" /></label>
+                <fieldset>
+                  <legend>使用部品</legend>
+                  <div id="recipeRows" class="recipe-rows"></div>
+                  <button class="ghost-button" id="addRecipeRow" type="button">部品を追加</button>
+                </fieldset>
+                <label>メモ<textarea name="memo" rows="3" placeholder="作り方、品質メモなど"></textarea></label>
+                <div class="form-actions">
+                  <button class="primary-button" type="submit">保存</button>
+                  <button class="ghost-button" type="reset">クリア</button>
+                </div>
+              </form>
+              <form class="panel form-panel accent-panel" id="productionForm">
+                <div class="panel-header">
+                  <h3>商品作成</h3>
+                </div>
+                <label>作成する商品<select name="productId" id="productionProduct"></select></label>
+                <label>作成数<input name="quantity" type="number" min="1" step="1" value="1" /></label>
+                <div id="productionPreview" class="production-preview empty-note">商品を選択してください</div>
+                <div class="form-actions">
+                  <button class="primary-button" type="submit">作成して在庫反映</button>
+                </div>
+              </form>
+            </div>
+            </div>
+            <section class="panel" data-section-panel-group="products" data-section-panel="list">
+              <div class="panel-header">
+                <h3>商品一覧</h3>
+                <input class="search" id="productSearch" placeholder="検索" />
+              </div>
+              <select id="productSort" aria-label="商品の並び順"><option value="name">名前順</option><option value="stock">在庫が少ない順</option><option value="price">価格が高い順</option></select>
+              <div id="productList" class="tile-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="venues">
+          <div class="event-page-tabs" role="tablist" aria-label="イベント管理メニュー">
+            <button class="event-page-tab active" type="button" data-event-page-tab="list" aria-selected="true">一覧</button>
+            <button class="event-page-tab" type="button" data-event-page-tab="record" aria-selected="false">記録</button>
+            <button class="event-page-tab" type="button" data-event-page-tab="progress" aria-selected="false">締め（任意）</button>
+          </div>
+          <div class="event-list-view">
+            <div class="catalog-toolbar event-catalog-toolbar">
+              <div>
+                <p class="eyebrow">EVENT JOURNAL</p>
+                <h3>出展イベントの記録</h3>
+                <p class="panel-subtitle">開催場所、写真、持参品、費用、運搬、感想をイベントごとに残します。</p>
+              </div>
+              <button class="primary-button" id="newVenueBtn" type="button">＋ 新しいイベント</button>
+            </div>
+            <div class="venue-editor-drawer" id="venueEditorDrawer" aria-hidden="true">
+            <form class="panel form-panel" id="venueForm">
+              <div class="panel-header">
+                <h3>出展イベント登録</h3>
+              </div>
+              <input type="hidden" name="id" />
+              <label>イベント名<input name="eventName" required placeholder="例: 青空マルシェ 春" /></label>
+              <div class="form-row">
+                <label>出展日<input name="date" type="date" required /></label>
+                <label>場所名<input name="placeName" required placeholder="例: 駅前広場" /></label>
+              </div>
+              <div class="form-row event-date-fields">
+                <label>申込期限<input name="applicationDeadline" type="date" /></label>
+                <label>合格予定日<input name="resultScheduledDate" type="date" /></label>
+              </div>
+              <label>実際の稼働日<input name="actualOperationDate" type="date" /></label>
+              <div class="form-row">
+                <label>都道府県<select name="prefecture"><option value="">未設定</option><option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option><option>秋田県</option><option>山形県</option><option>福島県</option><option>茨城県</option><option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option><option>東京都</option><option>神奈川県</option><option>新潟県</option><option>富山県</option><option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option><option>岐阜県</option><option>静岡県</option><option>愛知県</option><option>三重県</option><option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option><option>奈良県</option><option>和歌山県</option><option>鳥取県</option><option>島根県</option><option>岡山県</option><option>広島県</option><option>山口県</option><option>徳島県</option><option>香川県</option><option>愛媛県</option><option>高知県</option><option>福岡県</option><option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option><option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option></select></label>
+                <label>住所・会場情報<input name="address" placeholder="搬入口、ブース番号など" /></label>
+              </div>
+              <div class="form-row">
+                <label>出展料<input name="boothFee" type="number" min="0" step="1" value="0" /></label>
+                <label>駐車場代<input name="parkingFee" type="number" min="0" step="1" value="0" /></label>
+              </div>
+              <div class="form-row">
+                <label>交通費<input name="transportFee" type="number" min="0" step="1" value="0" /></label>
+                <label>その他費用<input name="otherFee" type="number" min="0" step="1" value="0" /></label>
+              </div>
+              <label>イベント画像を追加<input name="images" type="file" accept="image/*" multiple /></label>
+              <input type="hidden" name="removeImages" value="[]" />
+              <label class="check-label"><input name="replaceImages" type="checkbox" />既存画像を差し替える</label>
+              <div class="image-preview image-preview-gallery" id="venueImagePreview" aria-live="polite"></div>
+              <label>メモ<textarea name="memo" rows="4" placeholder="客層、天候、机サイズ、次回改善など"></textarea></label>
+              <fieldset class="prep-box">
+                <label>持込み予定の商品と数量</label>
+                <div id="venuePlanRows" class="venue-carry-rows"></div>
+                <button class="ghost-button" id="addVenuePlanRow" type="button">持込み予定商品を追加</button>
+                <legend>イベント準備</legend>
+                <div class="form-row">
+                  <label>持参予定商品数<input name="plannedProductQty" type="number" min="0" step="1" value="0" /></label>
+                  <label>釣り銭<input name="cashFloat" type="number" min="0" step="1" value="0" /></label>
+                </div>
+                <label>持ち物チェック<textarea name="prepItems" rows="3" placeholder="テーブル、什器、袋、名刺、予備部品など"></textarea></label>
+              </fieldset>
+              <fieldset class="event-record-box">
+                <legend>出展当日の記録</legend>
+                <div class="form-row">
+                  <label>駐車した場所<input name="parkingLocation" placeholder="例：会場隣の第2駐車場" /></label>
+                  <label>運搬回数<input name="transportTrips" type="number" min="0" step="1" value="0" /></label>
+                </div>
+                <label>持参した商品と数量</label>
+                <div id="venueCarryRows" class="venue-carry-rows"></div>
+                <button class="ghost-button" id="addVenueCarryRow" type="button">商品を追加</button>
+                <label>持参した什器・備品<textarea name="fixtures" rows="3" placeholder="例：テーブル、什器、値札、照明、延長コード"></textarea></label>
+                <label>出展後の感想・改善点<textarea name="review" rows="5" placeholder="売れた商品、来場者の反応、次回改善したいことなど"></textarea></label>
+                <label>自由記録<textarea name="customNotes" rows="4" placeholder="天候、周辺の様子、搬入時間、気づいたことなど"></textarea></label>
+              </fieldset>
+              <div class="form-actions">
+                <button class="primary-button" type="submit">保存</button>
+                <button class="ghost-button" type="reset">クリア</button>
+              </div>
+            </form>
+            </div>
+            <section class="panel">
+              <div class="panel-header">
+                <h3>出展イベント一覧</h3>
+              </div>
+              <select id="venueSort" aria-label="イベントの並び順"><option value="date">開催日が新しい順</option><option value="name">名前順</option><option value="profit">利益が高い順</option></select>
+              <div id="venueList" class="tile-list"></div>
+            </section>
+          </div>
+          <section class="panel event-workflow-panel event-progress-panel" id="eventWorkflowPanel">
+            <div class="optional-workflow-note">販売入力は「記録」タブの当日記録からレジへ進みます。このタブは、必要な場合だけイベント終了時の現金・キャッシュレスを確認するために使います。</div>
+            <div class="panel-header">
+              <div>
+                <h3>イベントの締め</h3>
+                <p class="panel-subtitle">販売記録と実際の受取額を照合します。</p>
+              </div>
+              <select id="eventWorkflowEvent" aria-label="進行するイベント"></select>
+            </div>
+            <div class="event-workflow-layout">
+              <div id="eventWorkflowSummary" class="workflow-summary"></div>
+              <form id="eventSettlementForm" class="settlement-form">
+                <div class="settlement-heading">
+                  <span class="eyebrow-dark">イベント終了時</span>
+                  <strong>現金を締める</strong>
+                </div>
+                <div class="form-row">
+                  <label>実際の現金<input name="actualCash" type="number" min="0" step="1" required /></label>
+                  <label>実績キャッシュレス<input name="actualCashless" type="number" min="0" step="1" value="0" /></label>
+                </div>
+                <label>締めメモ<textarea name="closingNote" rows="2" placeholder="差額の理由、売れ残り、次回へのメモなど"></textarea></label>
+                <div id="eventSettlementPreview" class="settlement-preview"></div>
+                <button class="primary-button" type="submit">締め処理を保存</button>
+              </form>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="purchases">
+          <nav class="catalog-tabs" data-section-tabs="purchases" role="tablist" aria-label="仕入れの操作">
+            <button class="catalog-tab active" type="button" data-section-tab="list" aria-selected="true">仕入れ履歴</button>
+            <button class="catalog-tab" type="button" data-section-tab="edit" aria-selected="false">仕入れ登録</button>
+          </nav>
+          <div class="work-grid">
+            <form class="panel form-panel purchase-editor-panel" id="purchaseForm" data-section-panel-group="purchases" data-section-panel="edit" hidden>
+              <input type="hidden" name="id" />
+              <input type="hidden" name="originalPartId" />
+              <div class="panel-header">
+                <div>
+                  <h3>仕入れ・入荷を登録</h3>
+                  <p class="panel-subtitle">入荷すると部品在庫と平均単価を自動更新します</p>
+                </div>
+              </div>
+              <div class="purchase-common-fields">
+                <label>仕入先<select name="supplier" id="purchaseSupplier" required></select></label>
+                <label>購入日<input name="date" type="date" required /></label>
+                <label>メモ<textarea name="memo" rows="2" placeholder="領収書番号、入荷内容など"></textarea></label>
+              </div>
+              <div class="purchase-batch-heading">
+                <div>
+                  <h4>購入する部品</h4>
+                  <p class="field-help">既存部品は選択、新規部品は名称だけ入力。カテゴリ・単位・保管場所は後から部品画面で登録できます。</p>
+                </div>
+                <button class="ghost-button" id="addPurchaseLine" type="button">＋部品を追加</button>
+              </div>
+              <div id="purchaseLines" class="purchase-batch-lines">
+                <div class="purchase-batch-line is-existing" data-purchase-line data-mode="existing">
+                  <div class="purchase-line-mode" role="group" aria-label="部品の登録方法">
+                    <button class="purchase-mode-button active" type="button" data-purchase-mode="existing">既存部品</button>
+                    <button class="purchase-mode-button" type="button" data-purchase-mode="new">新規部品</button>
+                  </div>
+                  <label class="purchase-existing-field">部品<select class="purchase-batch-part" id="purchasePart" name="batchPartId" required></select></label>
+                  <label class="purchase-new-field" hidden>新しい部品名<input name="batchPartName" type="text" maxlength="80" placeholder="例：クリアビーズ 8mm" /></label>
+                  <label>数量<div class="purchase-quantity-control"><button type="button" data-purchase-qty-step="-1" aria-label="数量を1減らす">−</button><input name="batchQty" type="number" min="0.01" step="0.01" value="1" required /><button type="button" data-purchase-qty-step="1" aria-label="数量を1増やす">＋</button></div></label>
+                  <label>仕入単価<input name="batchUnitCost" type="number" min="0" step="1" value="0" required /></label>
+                  <button class="icon-button purchase-line-remove" type="button" data-remove-purchase-line aria-label="この部品行を削除" title="この部品行を削除">×</button>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="primary-button" type="submit">仕入れを保存</button>
+                <button class="ghost-button" type="reset">クリア</button>
+              </div>
+              <p class="field-help">保存すると、入力した各部品の在庫数・平均単価・仕入先別集計に反映されます。</p>
+            </form>
+            <section class="panel purchase-history-panel" data-section-panel-group="purchases" data-section-panel="list">
+              <div class="panel-header">
+                <div>
+                  <h3>仕入れ履歴</h3>
+                  <p class="panel-subtitle">新しい入荷から表示</p>
+                </div>
+                <input class="search" id="purchaseSearch" placeholder="部品名・仕入先で検索" />
+              </div>
+              <select id="purchaseSort" aria-label="仕入履歴の並び順"><option value="date">日付が新しい順</option><option value="amount">金額が高い順</option><option value="name">部品名順</option></select>
+              <div id="purchaseList" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="sales">
+          <nav class="catalog-tabs" data-section-tabs="sales" role="tablist" aria-label="販売履歴の操作">
+            <button class="catalog-tab active" type="button" data-section-tab="list" aria-selected="true">一覧</button>
+            <button class="catalog-tab" type="button" data-section-tab="edit" aria-selected="false">明細を修正</button>
+          </nav>
+          <div class="work-grid sales-history-layout">
+            <form class="panel form-panel" id="saleForm" data-section-panel-group="sales" data-section-panel="edit" hidden>
+              <div class="panel-header">
+                <h3>販売明細を修正</h3>
+              </div>
+              <input type="hidden" name="id" />
+              <div class="sale-attributes">
+                <p class="field-group-title">販売記録の属性（任意）</p>
+                <div class="form-row">
+                  <label>販売時刻<input name="soldTime" type="time" /></label>
+                  <label>性別<select name="customerGender"><option value="unknown">未回答</option><option value="female">女性</option><option value="male">男性</option><option value="other">その他</option></select></label>
+                </div>
+                <div class="form-row">
+                  <label>年齢層<select name="customerAgeGroup"><option value="unknown">未回答</option><option value="under20">20歳未満</option><option value="20s">20代</option><option value="30s">30代</option><option value="40s">40代</option><option value="50s">50代</option><option value="60plus">60代以上</option></select></label>
+                  <label>購入者区分<select name="customerOrigin"><option value="unknown">未回答</option><option value="domestic">日本人</option><option value="inbound">海外</option></select></label>
+                </div>
+                <label data-customer-region-field>海外の地域傾向<select name="customerRegion"><option value="unknown">未回答</option><option value="western">欧米系</option><option value="asian">アジア系</option><option value="other">その他</option></select></label>
+              </div>
+              <label>日付<input name="date" type="date" required /></label>
+              <label>出展イベント<select name="venueId" id="saleVenue"></select></label>
+              <label>販売対象<select name="itemType" id="saleItemType">
+                <option value="product">商品</option>
+                <option value="part">部品</option>
+              </select></label>
+              <label>品目<select name="itemId" id="saleItem"></select></label>
+              <div class="form-row">
+                <label>数量<input name="quantity" type="number" min="0.01" step="0.01" value="1" /></label>
+                <label>実販売単価<input name="unitPrice" type="number" min="0" step="1" value="0" /></label>
+              </div>
+              <label>支払方法<select name="paymentMethod">
+                <option value="cash">現金</option>
+                <option value="cashless">キャッシュレス</option>
+              </select></label>
+              <div class="form-row">
+                <label>預かり金<input name="receivedAmount" type="number" min="0" step="1" value="0" /></label>
+                <label>おつり<input name="changeDue" type="text" value="0円" readonly /></label>
+              </div>
+              <label>メモ<textarea name="memo" rows="3" placeholder="値引き、値上げ、相手メモなど"></textarea></label>
+              <div class="form-actions">
+                <button class="primary-button" type="submit">販売を記録</button>
+                <button class="ghost-button" type="reset">クリア</button>
+              </div>
+            </form>
+            <section class="panel" data-section-panel-group="sales" data-section-panel="list">
+              <div class="panel-header">
+                <h3>販売履歴</h3>
+              </div>
+              <div class="filter-grid">
+                <label>イベント<select id="saleFilterVenue"></select></label>
+                <label>販売対象<select id="saleFilterType">
+                  <option value="">すべて</option>
+                  <option value="product">商品</option>
+                  <option value="part">部品</option>
+                </select></label>
+                <label>開始日<input id="saleFilterFrom" type="date" /></label>
+                <label>終了日<input id="saleFilterTo" type="date" /></label>
+                <label>検索<input id="saleFilterKeyword" placeholder="商品名・メモ" /></label>
+              </div>
+              <div id="checkoutList" class="list"></div>
+              <div id="saleList" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="salesAnalysis">
+          <section class="panel sales-analysis-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">SALES INSIGHT</p>
+                <h3>販売分析</h3>
+                <p class="panel-subtitle">売上の流れ、商品構成、時間帯、イベント、購入者属性をまとめて確認できます。</p>
+              </div>
+              <div class="analysis-filters">
+                <label>期間<select id="analysisPeriod"><option value="all">全期間</option><option value="year">直近1年間</option><option value="quarter">直近3ヶ月</option><option value="month">直近1ヶ月</option></select></label>
+                <label>イベント<select id="analysisVenue"></select></label>
+                <label>推移の単位<select id="analysisTrendMode"><option value="month">月別</option><option value="event">イベント別</option></select></label>
+              </div>
+            </div>
+            <div id="saleAnalysisSummary" class="sale-analysis-summary"></div>
+          </section>
+        </section>
+
+        <section class="view" id="stockHistory">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>在庫移動履歴</h3>
+                <p class="panel-subtitle">仕入れ・販売・製作・棚卸しを時系列で確認</p>
+              </div>
+              <div class="form-actions">
+                <select id="stockHistoryType" aria-label="履歴の種類">
+                  <option value="">すべての動き</option>
+                  <option value="purchase">仕入れ・入荷</option>
+                  <option value="sale">販売</option>
+                  <option value="production">製作</option>
+                  <option value="adjustment">棚卸し・調整</option>
+                </select>
+                <input class="search" id="stockHistorySearch" placeholder="品目名・理由で検索" />
+              </div>
+            </div>
+            <div id="stockHistoryList" class="list"></div>
+          </section>
+        </section>
+
+        <section class="view" id="expenses">
+          <nav class="catalog-tabs" data-section-tabs="expenses" role="tablist" aria-label="費用の操作">
+            <button class="catalog-tab active" type="button" data-section-tab="list" aria-selected="true">費用一覧</button>
+            <button class="catalog-tab" type="button" data-section-tab="edit" aria-selected="false">費用登録</button>
+          </nav>
+          <div class="work-grid">
+          <form class="panel form-panel" id="expenseForm" data-section-panel-group="expenses" data-section-panel="edit" hidden>
+            <div class="panel-header">
+              <h3>費用を登録</h3>
+            </div>
+            <input type="hidden" name="id" />
+            <label>日付<input name="date" type="date" required /></label>
+            <label>費目<input name="category" required placeholder="例: 送料、梱包費、宿泊費" /></label>
+            <label>金額<input name="amount" type="number" min="0" step="1" value="0" required /></label>
+            <label>関連イベント<select name="venueId" id="expenseVenue"></select></label>
+            <label>メモ<textarea name="memo" rows="3" placeholder="領収書番号、用途など"></textarea></label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">費用を保存</button>
+              <button class="ghost-button" type="reset">クリア</button>
+            </div>
+          </form>
+          <section class="panel" data-section-panel-group="expenses" data-section-panel="list">
+            <div class="panel-header">
+              <h3>費用一覧</h3>
+            </div>
+            <div id="expenseList" class="list"></div>
+          </section>
+          </div>
+        </section>
+
+        <section class="view" id="management">
+          <nav class="management-tabs" aria-label="管理・集計の分類">
+            <button class="management-tab active" type="button" data-management-tab="stock">在庫管理</button>
+            <button class="management-tab" type="button" data-management-tab="analysis">集計・分析</button>
+            <button class="management-tab" type="button" data-management-tab="advanced">詳細管理</button>
+            <button class="management-tab" type="button" data-management-tab="masters">マスタ管理</button>
+          </nav>
+          <div class="work-grid" data-management-panel="stock">
+            <form class="panel form-panel" id="stockAdjustmentForm">
+              <div class="panel-header"><h3>在庫調整・棚卸し</h3></div>
+              <label>対象<select name="itemType" id="adjustmentItemType"><option value="product">商品</option><option value="part">部品</option></select></label>
+              <label>品目<select name="itemId" id="adjustmentItem"></select></label>
+              <label>実在庫数<input name="actualStock" id="actualStock" type="number" min="0" step="0.01" required /></label>
+              <label>理由<input name="reason" required placeholder="棚卸し、破損、紛失など" /></label>
+              <button class="primary-button" type="submit">在庫を確定</button>
+              <div id="adjustmentHistory" class="list"></div>
+            </form>
+            <section class="panel">
+              <div class="panel-header"><h3>集計</h3></div>
+              <div id="managementSummary" class="summary-grid"></div>
+              <div class="form-actions">
+                <button class="ghost-button" id="exportSalesCsvBtn" type="button">販売CSV</button>
+                <button class="ghost-button" id="exportPartsCsvBtn" type="button">部品CSV</button>
+                <button class="ghost-button" id="exportProductsCsvBtn" type="button">商品CSV</button>
+                <button class="ghost-button" id="printLastReceiptBtn" type="button">直近レシート印刷</button>
+              </div>
+            </section>
+          </div>
+          <div class="work-grid" data-management-panel="analysis">
+            <section class="panel">
+              <div class="panel-header"><h3>仕入先別集計</h3></div>
+              <div id="supplierSummary" class="list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h3>月別・イベント別売上</h3></div>
+              <div id="salesSummary" class="list"></div>
+            </section>
+          </div>
+          <div class="work-grid" data-management-panel="advanced">
+            <section class="panel">
+              <div class="panel-header"><h3>商品コード</h3></div>
+              <label>商品・部品コード検索<input id="barcodeSearch" placeholder="バーコードを入力して検索" /></label>
+              <div id="barcodeResult" class="list"></div>
+              <label>QRコード文字列<input id="qrText" placeholder="商品コードやURLなど" /></label>
+              <button class="ghost-button" id="generateQrBtn" type="button">QRコードを表示</button>
+              <canvas id="qrCanvas" class="qr-canvas" width="220" height="220"></canvas>
+              <div class="single-user-note">
+                <strong>個人利用モード</strong>
+                <p class="field-help">このアプリは管理者1名で使用する前提です。権限の切り替えはありません。</p>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h3>操作ログ・取り消し</h3></div>
+              <div class="form-actions">
+                <button class="ghost-button" id="undoBtn" type="button">直前操作を取り消す</button>
+              </div>
+              <div id="operationLogList" class="list"></div>
+            </section>
+          </div>
+          <div class="master-management-grid" data-management-panel="masters">
+            <section class="panel master-management-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>部品カテゴリマスタ</h3>
+                  <p class="panel-subtitle">部品登録で選択できるカテゴリを管理します。</p>
+                </div>
+              </div>
+              <form class="master-entry-form" id="partCategoryMasterForm" data-master-form="partCategories">
+                <input name="value" required maxlength="40" placeholder="例：レジン素材、ビーズ" />
+                <button class="primary-button" type="submit">カテゴリを追加</button>
+              </form>
+              <div id="partCategoryMasterList" class="master-chip-list"></div>
+            </section>
+            <section class="panel master-management-panel">
+              <div class="panel-header">
+                <div>
+                  <h3>仕入先マスタ</h3>
+                  <p class="panel-subtitle">仕入先名に加えて、店舗の場所や簡易住所を登録できます。</p>
+                </div>
+              </div>
+              <form class="master-entry-form" id="supplierMasterForm" data-master-form="suppliers">
+                <input name="value" required maxlength="60" placeholder="例：手芸材料店、○○商店" />
+                <button class="primary-button" type="submit">仕入先を追加</button>
+              </form>
+              <div id="supplierMasterList" class="master-chip-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="dataManagement">
+          <div class="two-column">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>データの保存と移行</h3>
+                  <p class="panel-subtitle">端末内のデータを安全に管理します</p>
+                </div>
+              </div>
+              <div class="data-actions">
+                <button class="primary-button" id="dataExportBtn" type="button">JSONを書き出す</button>
+                <label class="ghost-button import-label">JSONを読み込む<input id="dataImportInput" type="file" accept="application/json" /></label>
+                <button class="ghost-button" id="dataRestoreBackupBtn" type="button">最新バックアップを復元</button>
+              </div>
+              <div class="data-danger-zone">
+                <div>
+                  <strong>危険な操作</strong>
+                  <p class="field-help">保存データをすべて削除します。必要な場合は先にJSONを書き出してください。</p>
+                </div>
+                <button class="danger-button" id="resetBtn" type="button">全データ初期化</button>
+              </div>
+              <div class="backup-status" id="dataBackupStatus"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>保存容量と注意</h3>
+                  <p class="panel-subtitle">画像が多い場合はJSONバックアップを定期保存</p>
+                </div>
+              </div>
+              <div id="dataStorageStatus" class="storage-detail"></div>
+              <div class="form-actions">
+                <button class="ghost-button" id="dataStartTutorialBtn" type="button">操作ガイドを再実行</button>
+              </div>
+            </section>
+          </div>
+          <section class="panel data-backup-panel">
+            <div class="panel-header">
+              <div>
+                <h3>バックアップ履歴</h3>
+                <p class="panel-subtitle">任意の世代を選んで復元できます</p>
+              </div>
+              <button class="ghost-button" id="dataRefreshBackupsBtn" type="button">履歴を更新</button>
+            </div>
+            <div id="dataBackupHistory" class="list"></div>
+          </section>
+          <section class="panel data-backup-panel">
+            <div class="panel-header">
+              <div>
+                <h3>削除済みデータ</h3>
+                <p class="panel-subtitle">削除した商品・部品はここから復元できます。</p>
+              </div>
+            </div>
+            <div id="archivedDataList" class="list"></div>
+          </section>
+          <section class="panel data-backup-panel">
+            <div class="panel-header">
+              <div>
+                <h3>取消済み販売の完全削除</h3>
+                <p class="panel-subtitle">通常の販売画面では削除できません。必要な場合だけ、ここから完全に削除します。</p>
+              </div>
+            </div>
+            <div id="deletedSalesList" class="list"></div>
+          </section>
+          <section class="panel data-backup-panel">
+            <div class="panel-header">
+              <div>
+                <h3>データ診断</h3>
+                <p class="panel-subtitle">商品・部品・売上の参照切れや在庫異常を確認します。</p>
+              </div>
+              <button class="ghost-button" id="runIntegrityCheckBtn" type="button">診断する</button>
+            </div>
+            <div id="integrityList" class="list"><div class="empty-note">診断ボタンを押すと確認できます。</div></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <h3 id="modalTitle">確認</h3>
+        <p id="modalMessage"></p>
+        <div class="modal-actions" id="modalActions"></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="pickerBackdrop" aria-hidden="true">
+      <div class="modal picker-modal" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+        <div class="panel-header">
+          <h3 id="pickerTitle">商品を選択</h3>
+          <button class="ghost-button" id="closePicker" type="button">閉じる</button>
+        </div>
+        <div class="picker-grid" id="pickerGrid"></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop calendar-event-backdrop" id="calendarEventBackdrop" aria-hidden="true">
+      <section class="modal calendar-event-modal" role="dialog" aria-modal="true" aria-labelledby="calendarEventModalTitle">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">CALENDAR NOTE</p>
+            <h3 id="calendarEventModalTitle">予定を追加</h3>
+          </div>
+          <button class="ghost-button" id="closeCalendarEventModal" type="button">閉じる</button>
+        </div>
+        <form id="calendarEventForm" class="calendar-event-form">
+          <input type="hidden" name="id" />
+          <label>種類
+            <select name="type">
+              <option value="application">申込期限</option>
+              <option value="result">合否予定日</option>
+              <option value="event">開催日</option>
+              <option value="other">その他</option>
+            </select>
+          </label>
+          <label>予定名<input name="title" required maxlength="80" placeholder="例：抽選結果の確認" /></label>
+          <div class="form-row">
+            <label>開始日<input name="startDate" type="date" required /></label>
+            <label>終了日（任意）<input name="endDate" type="date" /></label>
+          </div>
+          <label class="calendar-color-field">カラー
+            <span class="calendar-color-control"><input name="color" type="color" value="#087694" /><span>カレンダー上の色を選択</span></span>
+          </label>
+          <label>メモ<textarea name="memo" rows="3" placeholder="抽選方法、準備内容、確認先など"></textarea></label>
+          <div class="form-actions">
+            <button class="primary-button" type="submit">予定を保存</button>
+            <button class="ghost-button" id="cancelCalendarEvent" type="button">キャンセル</button>
+          </div>
+        </form>
+        <section id="calendarEventDetail" class="calendar-event-detail" hidden></section>
+      </section>
+    </div>
+
+    <div class="modal-backdrop master-entry-backdrop" id="masterEntryBackdrop" aria-hidden="true">
+      <section class="modal master-entry-modal" role="dialog" aria-modal="true" aria-labelledby="masterEntryTitle">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">MASTER DATA</p>
+            <h3 id="masterEntryTitle">マスタを追加</h3>
+          </div>
+          <button class="ghost-button" id="closeMasterEntryModal" type="button">閉じる</button>
+        </div>
+        <form id="masterEntryForm" class="master-entry-modal-form">
+          <input type="hidden" name="key" />
+          <label>名称<input name="value" required maxlength="60" /></label>
+          <div id="supplierMasterDetailFields" hidden>
+            <label>簡易住所・場所<textarea name="address" rows="2" maxlength="160" placeholder="例：○○店、駅前の○○コーナー付近"></textarea></label>
+            <label>場所メモ<textarea name="memo" rows="3" maxlength="300" placeholder="例：2階手芸コーナー、入口右側、駐車場側など"></textarea></label>
+          </div>
+          <div class="form-actions">
+            <button class="primary-button" type="submit">マスタに登録</button>
+            <button class="ghost-button" id="cancelMasterEntryModal" type="button">キャンセル</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+    <div class="tutorial-layer" id="tutorialLayer" hidden>
+      <div class="tutorial-backdrop" aria-hidden="true"></div>
+      <section class="tutorial-tip" id="tutorialTip" role="dialog" aria-labelledby="tutorialTitle">
+        <div class="tutorial-progress"><span id="tutorialStepLabel"></span><button id="tutorialSkipBtn" type="button">スキップ</button></div>
+        <h2 id="tutorialTitle"></h2>
+        <p id="tutorialMessage"></p>
+        <div class="tutorial-actions">
+          <button class="ghost-button" id="tutorialBackBtn" type="button">戻る</button>
+          <button class="primary-button" id="tutorialNextBtn" type="button">次へ</button>
+        </div>
+      </section>
+    </div>
+
+    <template id="recipeTemplate">
+      <div class="recipe-row">
+        <select name="recipePart"></select>
+        <input name="recipeQty" type="number" min="0.01" step="0.01" value="1" />
+        <button class="icon-button" type="button" aria-label="削除">×</button>
+      </div>
+    </template>
+
+    <script src="node_modules/qrcode/build/qrcode.min.js"></script>
+    <script src="app.js?v=quick-stock-4"></script>
+  </body>
+</html>

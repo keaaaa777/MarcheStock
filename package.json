@@ -1,0 +1,76 @@
+{
+  "name": "personal-inventory-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "desktop": "electron .",
+    "dist:win": "electron-builder --win nsis portable",
+    "dist:mac": "electron-builder --mac dmg zip",
+    "dist:mac:universal": "electron-builder --mac --universal dmg zip"
+  },
+  "build": {
+    "appId": "jp.marche.stock",
+    "productName": "Marche Stock",
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "main.cjs",
+      "package.json",
+      "node_modules/qrcode/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "Marche-Stock-Installer-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Marche-Stock-Portable-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "artifactName": "Marche-Stock-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "Marche Stock",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220,
+          "type": "file"
+        },
+        {
+          "x": 490,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^38.1.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <rect width="800" height="500" rx="40" fill="#dff5ed"/>
+  <path d="M0 340c160-80 280 50 430-20s250-35 370 15v165H0z" fill="#a9d9ca"/>
+  <path d="M210 315h380v95H210z" fill="#fffaf0" stroke="#547a6b" stroke-width="8"/><path d="M180 315l60-95h320l60 95z" fill="#f6b3a7" stroke="#547a6b" stroke-width="8"/>
+  <text x="400" y="290" text-anchor="middle" font-family="sans-serif" font-size="35" font-weight="700" fill="#547a6b">CRAFT MARKET</text>
+  <circle cx="275" cy="370" r="20" fill="#ffd68e"/><circle cx="340" cy="370" r="20" fill="#b9dcff"/><circle cx="465" cy="370" r="20" fill="#f5c6dc"/><circle cx="530" cy="370" r="20" fill="#c9edc8"/>
+  <text x="400" y="465" text-anchor="middle" font-family="sans-serif" font-size="27" fill="#3e6154">青空クラフトマルシェ</text>
+</svg>
