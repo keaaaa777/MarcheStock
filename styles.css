@@ -6744,3 +6744,153 @@ label {
     font-size: 14px;
   }
 }
+
+/* Compact navigation: iPad・スマホではサイドバーを隠し、メニューボタンから重ねて表示する。 */
+.menu-toggle,
+.nav-backdrop {
+  display: none;
+}
+
+.topbar-title {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 1080px) {
+  .menu-toggle {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--blue-900);
+    box-shadow: var(--shadow);
+  }
+
+  .menu-toggle span,
+  .menu-toggle span::before,
+  .menu-toggle span::after {
+    display: block;
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+
+  .menu-toggle span {
+    position: relative;
+  }
+
+  .menu-toggle span::before,
+  .menu-toggle span::after {
+    content: "";
+    position: absolute;
+    left: 0;
+  }
+
+  .menu-toggle span::before {
+    top: -7px;
+  }
+
+  .menu-toggle span::after {
+    top: 7px;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    z-index: 46;
+    width: min(300px, 86vw);
+    height: 100vh;
+    height: 100dvh;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    border: 0;
+    border-radius: 0 12px 12px 0;
+    box-shadow: 0 24px 60px rgba(7, 48, 71, 0.35);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 220ms var(--ease-smooth), visibility 0s linear 220ms;
+  }
+
+  body.nav-open .sidebar {
+    transform: none;
+    visibility: visible;
+    transition: transform 220ms var(--ease-smooth), visibility 0s;
+  }
+
+  .sidebar::after {
+    display: block;
+  }
+
+  .brand {
+    display: flex;
+    margin-bottom: 20px;
+  }
+
+  .nav {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    overflow: visible;
+  }
+
+  .nav-item {
+    min-height: 46px;
+    padding: 10px 13px;
+    font-size: 15px;
+    text-align: left;
+  }
+
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(4, 28, 42, 0.45);
+  }
+
+  .nav-backdrop[hidden] {
+    display: none;
+  }
+
+  body.nav-open {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 640px) {
+  /* 下部固定メニューをやめたので、下の余白は通常どおりに戻す。 */
+  .main {
+    padding: 14px 12px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body:has(#register.view.active) .main {
+    padding: 8px 8px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .topbar,
+  body:has(#register.view.active) .topbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px 12px;
+  }
+
+  body:has(#register.view.active) .topbar {
+    margin-bottom: 6px;
+  }
+
+  .topbar-actions {
+    grid-column: 1 / -1;
+  }
+}

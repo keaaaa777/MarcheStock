@@ -1,7 +1,7 @@
 // オフライン用 Service Worker。
 // キャッシュを先に返し、オンライン時は裏で最新版を取得して次回起動時に反映する。
 // アプリのファイルを更新したら CACHE_VERSION を上げる。
-const CACHE_VERSION = "marche-stock-v1";
+const CACHE_VERSION = "marche-stock-v2";
 const PRECACHE = [
   "./",
   "./index.html",

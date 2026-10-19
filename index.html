@@ -32,7 +32,7 @@
       </svg>
     </div>
     <div class="app-shell">
-      <aside class="sidebar">
+      <aside class="sidebar" id="appSidebar">
         <div class="brand">
           <div class="brand-mark">M</div>
           <div>
@@ -56,10 +56,14 @@
           <button class="nav-item" data-view="dataManagement">データ管理</button>
         </nav>
       </aside>
+      <div class="nav-backdrop" id="navBackdrop" hidden></div>
 
       <main class="main">
         <header class="topbar">
-          <div>
+          <button class="menu-toggle" id="menuToggle" type="button" aria-controls="appSidebar" aria-expanded="false" aria-label="メニューを開く">
+            <span aria-hidden="true"></span>
+          </button>
+          <div class="topbar-title">
             <p class="eyebrow">For Marche Vendors</p>
             <h2 id="view-title">概要</h2>
           </div>
@@ -1076,6 +1080,6 @@
     </template>
 
     <script src="vendor/qrcode.min.js"></script>
-    <script src="app.js?v=quick-stock-4"></script>
+    <script src="app.js?v=quick-stock-5"></script>
   </body>
 </html>

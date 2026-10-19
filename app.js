@@ -58,7 +58,8 @@ const tutorialSteps = [
   { target: () => null, kind: "done", title: "準備ができました", message: "これで基本登録は完了です。次はレジから販売を記録してみましょう。" },
 ];
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await initStorage();
   setTodayDefaults();
   bindNavigation();
   bindSectionTabs();
@@ -81,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-function loadState() {
+function loadState(stored = null) {
   const blank = {
     parts: [], products: [], venues: [], calendarEvents: [], sales: [], expenses: [],
     masters: { partCategories: ["レジン素材", "ビーズ", "金具", "梱包資材"], suppliers: [] },
@@ -89,16 +90,9 @@ function loadState() {
     stockAdjustments: [], operationLogs: [],
     users: [{ id: "owner", name: "管理者", role: "admin" }],
   };
-  let raw = "";
+  if (!stored) return blank;
   try {
-    raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_KEY) || "";
-  } catch (error) {
-    stateLoadError = error;
-    return blank;
-  }
-  if (!raw) return blank;
-  try {
-    const parsed = { ...blank, ...JSON.parse(raw) };
+    const parsed = { ...blank, ...(typeof stored === "string" ? JSON.parse(stored) : stored) };
     parsed.parts = parsed.parts.map(normalizePart);
     parsed.masters = normalizeMasters(parsed.masters, parsed.parts);
     parsed.products = parsed.products.map(normalizeProduct);
@@ -387,6 +381,14 @@ function saveState({ createBackup = true, recordUndo = true, action = "データ
     action,
   });
   state.operationLogs = state.operationLogs.slice(0, 200);
+  if (storageBackend === "indexeddb") {
+    const backupSaved = createBackup ? writeAutoBackup() : true;
+    scheduleDatabaseWrite();
+    lastBackupSaved = backupSaved;
+    lastPersistedSnapshot = JSON.stringify(state);
+    updateStorageStatus(true, null, backupSaved);
+    return true;
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
@@ -402,6 +404,225 @@ function saveState({ createBackup = true, recordUndo = true, action = "データ
   lastPersistedSnapshot = JSON.stringify(state);
   updateStorageStatus(true, null, backupSaved);
   return true;
+}
+
+// ---- 保存先（IndexedDB。使えない環境では localStorage） ----
+const DB_NAME = "marche-stock";
+const DB_VERSION = 1;
+const MAX_BACKUPS = 10;
+const IMAGE_MIN_LENGTH = 1024;
+let storageBackend = "indexeddb";
+let databasePromise = null;
+let backupsCache = [];
+let knownImageIds = new Set();
+const pendingImages = new Map();
+let databaseWriteChain = Promise.resolve();
+let databaseWriteQueued = false;
+let databaseWritesPending = 0;
+
+async function initStorage() {
+  try {
+    databasePromise = openDatabase();
+    const db = await databasePromise;
+    const tx = db.transaction(["kv", "images"], "readonly");
+    const [storedState, storedBackups, imageIds] = await Promise.all([
+      requestResult(tx.objectStore("kv").get("state")),
+      requestResult(tx.objectStore("kv").get("backups")),
+      requestResult(tx.objectStore("images").getAllKeys()),
+    ]);
+    knownImageIds = new Set(imageIds);
+    if (storedState) {
+      const ids = new Set();
+      collectImageRefs(storedState, ids);
+      replaceState(loadState(injectImages(storedState, await loadImages(ids))));
+      backupsCache = validBackups(storedBackups);
+    } else {
+      await migrateFromLocalStorage();
+    }
+  } catch (error) {
+    console.warn("IndexedDB を使えないため localStorage に保存します", error);
+    storageBackend = "localStorage";
+    const legacy = readLocalStorageData();
+    replaceState(loadState(legacy.raw));
+    backupsCache = legacy.backups;
+  }
+  lastPersistedSnapshot = JSON.stringify(state);
+}
+
+// 初回だけ、これまでの localStorage のデータを IndexedDB へ移す。元のデータは念のため消さずに残す。
+async function migrateFromLocalStorage() {
+  const legacy = readLocalStorageData();
+  replaceState(loadState(legacy.raw));
+  if (!legacy.raw || stateLoadError) return;
+  backupsCache = legacy.backups.map((backup) => ({ ...backup, data: extractImages(backup.data, pendingImages) }));
+  await writeToDatabase();
+  const db = await databasePromise;
+  const tx = db.transaction("kv", "readwrite");
+  tx.objectStore("kv").put(new Date().toISOString(), "migratedFromLocalStorageAt");
+  await transactionDone(tx);
+}
+
+function readLocalStorageData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_KEY) || "";
+    let backups = [];
+    try {
+      backups = validBackups(JSON.parse(localStorage.getItem(BACKUP_KEY) || "[]"));
+    } catch {
+      backups = [];
+    }
+    return { raw, backups };
+  } catch (error) {
+    stateLoadError = error;
+    return { raw: "", backups: [] };
+  }
+}
+
+function replaceState(next) {
+  Object.keys(state).forEach((key) => delete state[key]);
+  Object.assign(state, next);
+}
+
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error("IndexedDB unavailable"));
+      return;
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains("kv")) db.createObjectStore("kv");
+      if (!db.objectStoreNames.contains("images")) db.createObjectStore("images");
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error("IndexedDB blocked"));
+  });
+}
+
+function requestResult(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function transactionDone(tx) {
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error("transaction aborted"));
+  });
+}
+
+// 連続した保存は1回の書き込みにまとめ、順番どおりに書き込む。
+function scheduleDatabaseWrite() {
+  if (databaseWriteQueued) return;
+  databaseWriteQueued = true;
+  databaseWritesPending += 1;
+  databaseWriteChain = databaseWriteChain
+    .then(() => {
+      databaseWriteQueued = false;
+      return writeToDatabase();
+    })
+    .catch((error) => {
+      console.error("データを保存できませんでした", error);
+      lastBackupSaved = false;
+      updateStorageStatus(false, error);
+      showToast("データを保存できませんでした。端末の空き容量を確認してください。");
+    })
+    .finally(() => { databaseWritesPending -= 1; });
+}
+
+async function writeToDatabase() {
+  const images = new Map(pendingImages);
+  pendingImages.clear();
+  try {
+    const stateRecord = extractImages(state, images);
+    const referenced = new Set();
+    collectImageRefs(stateRecord, referenced);
+    backupsCache.forEach((backup) => collectImageRefs(backup.data, referenced));
+    const db = await databasePromise;
+    const tx = db.transaction(["kv", "images"], "readwrite");
+    const imageStore = tx.objectStore("images");
+    const stored = new Set();
+    referenced.forEach((id) => {
+      if (knownImageIds.has(id)) stored.add(id);
+      else if (images.has(id)) {
+        imageStore.put(images.get(id), id);
+        stored.add(id);
+      }
+    });
+    // どこからも参照されなくなった画像を削除する。
+    knownImageIds.forEach((id) => { if (!referenced.has(id)) imageStore.delete(id); });
+    tx.objectStore("kv").put(stateRecord, "state");
+    tx.objectStore("kv").put(backupsCache, "backups");
+    await transactionDone(tx);
+    knownImageIds = stored;
+  } catch (error) {
+    images.forEach((value, id) => { if (!pendingImages.has(id)) pendingImages.set(id, value); });
+    throw error;
+  }
+}
+
+async function loadImages(ids) {
+  const images = new Map();
+  if (!ids.size) return images;
+  const db = await databasePromise;
+  const store = db.transaction("images", "readonly").objectStore("images");
+  await Promise.all([...ids].map(async (id) => {
+    const value = await requestResult(store.get(id));
+    if (typeof value === "string") images.set(id, value);
+  }));
+  return images;
+}
+
+function imageId(value) {
+  // cyrb53: 画像文字列から重複判定用のIDを作る（暗号用途ではない）。
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < value.length; i += 1) {
+    const ch = value.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `img_${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}_${value.length.toString(36)}`;
+}
+
+// data:image/... の文字列を { __imageRef: id } に置き換えたコピーを返し、画像本体を images に集める。
+function extractImages(value, images) {
+  if (typeof value === "string") {
+    if (value.length < IMAGE_MIN_LENGTH || !value.startsWith("data:image/")) return value;
+    const id = imageId(value);
+    images.set(id, value);
+    return { __imageRef: id };
+  }
+  if (Array.isArray(value)) return value.map((item) => extractImages(item, images));
+  if (value && typeof value === "object") {
+    if (typeof value.__imageRef === "string") return value;
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, extractImages(item, images)]));
+  }
+  return value;
+}
+
+function collectImageRefs(value, ids) {
+  if (Array.isArray(value)) value.forEach((item) => collectImageRefs(item, ids));
+  else if (value && typeof value === "object") {
+    if (typeof value.__imageRef === "string") ids.add(value.__imageRef);
+    else Object.values(value).forEach((item) => collectImageRefs(item, ids));
+  }
+}
+
+function injectImages(value, images) {
+  if (Array.isArray(value)) return value.map((item) => injectImages(item, images));
+  if (value && typeof value === "object") {
+    if (typeof value.__imageRef === "string") return images.get(value.__imageRef) || "";
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, injectImages(item, images)]));
+  }
+  return value;
 }
 
 function restoreLastPersistedState() {
@@ -433,7 +654,7 @@ function formatBytes(bytes) {
 
 function storageUsageBytes() {
   const stateSize = new Blob([JSON.stringify(state)]).size;
-  const backupSize = new Blob([localStorage.getItem(BACKUP_KEY) || ""]).size;
+  const backupSize = new Blob([JSON.stringify(backupsCache)]).size;
   return stateSize + backupSize;
 }
 
@@ -503,7 +724,38 @@ function syncCustomerRegionFields(form) {
   }
 }
 
+// iPad・スマホでは、サイドバーをメニューボタンから重ねて開く。
+const compactNavQuery = window.matchMedia("(max-width: 1080px)");
+
+function setNavOpen(open) {
+  const toggle = document.getElementById("menuToggle");
+  const backdrop = document.getElementById("navBackdrop");
+  const sidebar = document.getElementById("appSidebar");
+  const active = open && compactNavQuery.matches;
+  document.body.classList.toggle("nav-open", active);
+  if (backdrop) backdrop.hidden = !active;
+  toggle?.setAttribute("aria-expanded", String(active));
+  toggle?.setAttribute("aria-label", active ? "メニューを閉じる" : "メニューを開く");
+  sidebar?.toggleAttribute("inert", compactNavQuery.matches && !active);
+  if (active) sidebar?.querySelector(".nav-item.active, .nav-item")?.focus();
+}
+
+function bindCompactNavigation() {
+  const toggle = document.getElementById("menuToggle");
+  toggle?.addEventListener("click", () => setNavOpen(!document.body.classList.contains("nav-open")));
+  document.getElementById("navBackdrop")?.addEventListener("click", () => setNavOpen(false));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.body.classList.contains("nav-open")) {
+      setNavOpen(false);
+      toggle?.focus();
+    }
+  });
+  compactNavQuery.addEventListener("change", () => setNavOpen(false));
+  setNavOpen(false);
+}
+
 function bindNavigation() {
+  bindCompactNavigation();
   document.querySelector(".nav-item.active")?.setAttribute("aria-current", "page");
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -520,6 +772,7 @@ function bindNavigation() {
       button.setAttribute("aria-current", "page");
       document.getElementById(button.dataset.view).classList.add("active");
       document.getElementById("view-title").textContent = views[button.dataset.view];
+      setNavOpen(false);
     });
   });
 }
@@ -749,7 +1002,7 @@ function bindForms() {
   document.getElementById("purchaseForm").addEventListener("reset", () => setTimeout(() => clearPurchaseForm(false)));
   document.getElementById("saleForm").addEventListener("reset", () => setTimeout(() => clearSaleForm(false)));
   window.addEventListener("beforeunload", (event) => {
-    if (!document.querySelector("form[data-dirty=\"1\"]")) return;
+    if (!document.querySelector("form[data-dirty=\"1\"]") && !databaseWritesPending) return;
     event.preventDefault();
     event.returnValue = "";
   });
@@ -4647,8 +4900,9 @@ async function restoreBackupAt(index) {
   const ok = await showConfirm("バックアップを復元しますか？", `${formatDateTime(backup.savedAt)}の状態に戻します。現在の状態は別途バックアップします。`);
   if (!ok) return;
   try {
+    const data = await backupData(backup);
     writeAutoBackup();
-    Object.assign(state, normalizeImportedState(backup.data));
+    Object.assign(state, normalizeImportedState(data));
     if (!saveState({ action: "任意バックアップ復元" })) return;
   } catch (error) {
     console.error(error);
@@ -5397,16 +5651,23 @@ function renderProductionPreview() {
 }
 
 function writeAutoBackup() {
-  const backups = readBackups();
   const snapshot = {
     id: uid("backup"),
     savedAt: new Date().toISOString(),
     data: JSON.parse(JSON.stringify(state)),
   };
-  backups.unshift(snapshot);
-  for (let limit = 10; limit >= 1; limit -= 1) {
+  if (storageBackend === "indexeddb") {
+    // 画像は images ストアに1枚だけ保存し、バックアップには参照だけを持たせる。
+    snapshot.data = extractImages(snapshot.data, pendingImages);
+    backupsCache = [snapshot, ...backupsCache].slice(0, MAX_BACKUPS);
+    scheduleDatabaseWrite();
+    return true;
+  }
+  const backups = [snapshot, ...backupsCache];
+  for (let limit = MAX_BACKUPS; limit >= 1; limit -= 1) {
     try {
       localStorage.setItem(BACKUP_KEY, JSON.stringify(backups.slice(0, limit)));
+      backupsCache = backups.slice(0, limit);
       return true;
     } catch (error) {
       console.warn(`自動バックアップ${limit}世代の保存に失敗しました`, error);
@@ -5414,6 +5675,7 @@ function writeAutoBackup() {
   }
   try {
     localStorage.removeItem(BACKUP_KEY);
+    backupsCache = [];
   } catch (error) {
     console.warn("自動バックアップを削除できませんでした", error);
   }
@@ -5422,14 +5684,21 @@ function writeAutoBackup() {
 }
 
 function readBackups() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(BACKUP_KEY) || "[]");
-    return Array.isArray(parsed)
-      ? parsed.filter((backup) => backup && typeof backup === "object" && backup.data && typeof backup.data === "object")
-      : [];
-  } catch {
-    return [];
-  }
+  return backupsCache;
+}
+
+function validBackups(list) {
+  return Array.isArray(list)
+    ? list.filter((backup) => backup && typeof backup === "object" && backup.data && typeof backup.data === "object")
+    : [];
+}
+
+// 復元用に、参照になっている画像を差し戻したバックアップ内容を返す。
+async function backupData(backup) {
+  if (storageBackend !== "indexeddb") return backup.data;
+  const ids = new Set();
+  collectImageRefs(backup.data, ids);
+  return injectImages(backup.data, await loadImages(ids));
 }
 
 function renderBackupStatus() {
@@ -5455,8 +5724,9 @@ async function restoreLatestBackup() {
   const ok = await showConfirm("バックアップを復元しますか？", `${formatDateTime(latest.savedAt)} の状態に戻します。現在の状態は復元前に自動バックアップされます。`);
   if (!ok) return;
   try {
+    const data = await backupData(latest);
     writeAutoBackup();
-    Object.assign(state, normalizeImportedState(latest.data));
+    Object.assign(state, normalizeImportedState(data));
     if (!saveState()) return;
   } catch (error) {
     console.error(error);
