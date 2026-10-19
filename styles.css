@@ -86,7 +86,7 @@ button {
 .decor-fish-a {
   top: 88px;
   right: 38px;
-  animation: fishDrift 8s ease-in-out infinite;
+  transform: rotate(-4deg);
 }
 
 .decor-shell {
@@ -111,16 +111,6 @@ button {
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0.72;
-}
-
-@keyframes fishDrift {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(-4deg);
-  }
-  50% {
-    transform: translate(-18px, 12px) rotate(3deg);
-  }
 }
 
 .app-shell {
@@ -484,7 +474,6 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
-  backdrop-filter: blur(14px);
 }
 
 .metric {
